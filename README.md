@@ -1,4 +1,4 @@
-# FIREWALLCONTROL
+## FIREWALLCONTROL
 
 firewallControl is a simple shell script that I used to help a manager some iptables rules in my desktop.
 
