@@ -1,0 +1,4 @@
+iptables -t filter -A OUTPUT -p icmp --icmp-type any -m limit --limit 1/s -j ACCEPT  # PERMITINDO PING
+iptables -t filter -A INPUT  -p icmp --icmp-type any -m limit --limit 1/s -j ACCEPT  # PERMITINDO PING
+iptables -t filter -A OUTPUT -p tcp --dport 33434:33525 -j ACCEPT                    # PERMITINDO TRACEROUTE
+iptables -t filter -A OUTPUT -p udp --dport 33434:33525 -j ACCEPT                    # PERMITINDO TRACEROUTE

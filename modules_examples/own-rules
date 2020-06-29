@@ -1,0 +1,13 @@
+# ssh
+iptables -t filter -A OUTPUT -p tcp --dport 22 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+
+# NTP
+iptables -t filter -A OUTPUT -p udp --dport 123 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+
+# Google Meeting
+iptables -t filter -A OUTPUT -p tcp --dport 19302:19309 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+iptables -t filter -A OUTPUT -p udp --dport 19302:19309 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+
+# Databases - MySQL and PostgreSQL
+iptables -t filter -A OUTPUT -p tcp --dport 3306 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+iptables -t filter -A OUTPUT -p tcp --dport 5432 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT

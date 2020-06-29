@@ -1,0 +1,9 @@
+# Enable IP Forward
+echo 1 > /proc/sys/net/ipv4/ip_forward
+
+# Enable forward between the vbox network
+iptables -t filter -A FORWARD -i vboxnet+ -j ACCEPT
+iptables -t filter -A FORWARD -o vboxnet+ -j ACCEPT
+
+# MASQUERADE the traffic
+iptables -t nat -A POSTROUTING -j MASQUERADE

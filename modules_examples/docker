@@ -1,0 +1,9 @@
+# Enable IP Forward
+echo 1 > /proc/sys/net/ipv4/ip_forward
+
+# Enable forward between the docker network
+iptables -t filter -A FORWARD -i docker+ -j ACCEPT
+iptables -t filter -A FORWARD -o docker+ -j ACCEPT
+
+# MASQUERADE the traffic
+iptables -t nat -A POSTROUTING -j MASQUERADE

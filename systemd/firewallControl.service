@@ -1,0 +1,12 @@
+[Unit]
+Description=Permit manager easily iptables rule
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/firewallControl
+ExecStop=/usr/local/bin/firewallControl -az
+RemainAfterExit=yes
+
+
+[Install]
+WantedBy=network.target
