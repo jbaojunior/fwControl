@@ -99,7 +99,7 @@ done
 ### Do the right variable
 if [ -z "${configDir}"  ]
 then
-  configDir="/etc/firewallControl"
+  configDir="/etc/fwControl"
 fi
 
 if [ -z "${loadModulesFile}" ]

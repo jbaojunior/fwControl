@@ -3,8 +3,8 @@ Description=Permit manager easily iptables rule
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/firewallControl
-ExecStop=/usr/local/bin/firewallControl -az
+ExecStart=/usr/local/bin/fwControl
+ExecStop=/usr/local/bin/fwControl -az
 RemainAfterExit=yes
 
 

@@ -1,6 +1,6 @@
-## FIREWALLCONTROL
+## FWCONTROL
 
-firewallControl is a simple shell script that I used to help a manager some iptables rules in my desktop.
+fwControl is a simple shell script that I used to help a manager some iptables rules in my desktop.
 
 It is not advanced. I build to help a load and unload some rules while I work and do some tests.
 
@@ -8,9 +8,9 @@ The ideia is have some default rules and load others rules very easy.
 
 The default policy is DROP and it is used just in table filter. I control all my output and block all my input.
 
-The default directory is `/etc/firewallControl`. This can be change using the parameter `-C` together with shell script.
+The default directory is `/etc/fwControl`. This can be change using the parameter `-C` together with shell script.
 
-The modules that can be used are inside directory `etc/firewallControl/modules`.  You can create your own file rules and put inside this directory. To load automatically when service started use the file `modules.fw` put the modules name in each line. This file should be create in the `etc/firewallControl`.
+The modules that can be used are inside directory `etc/fwControl/modules`.  You can create your own file rules and put inside this directory. To load automatically when service started use the file `modules.fw` put the modules name in each line. This file should be create in the `etc/fwControl`.
 
 The rules default are:
 
@@ -92,7 +92,7 @@ The options are:
     <br>&emsp;File with modules name to be load. The format is one module per line. The default is ${CONFIG_DIRECTORY}/modules.fw
 
   - -C config_directory
-    <br>&emsp;Modules files directory. Default is /etc/ownFirewall
+    <br>&emsp;Modules files directory. Default is /etc/fwControl
 
   - -l 
     <br>&emsp;List all modules can be used"
@@ -104,4 +104,4 @@ The options are:
     <br>&emsp;Show this help
 
 ### INSTALL
-Clone this project and execute `./installfirewallControl.sh` as root.
+Clone this project and execute `./installfwControl.sh` as root.

@@ -5,5 +5,12 @@ echo 1 > /proc/sys/net/ipv4/ip_forward
 iptables -t filter -A FORWARD -i docker+ -j ACCEPT
 iptables -t filter -A FORWARD -o docker+ -j ACCEPT
 
+# Permit docker interface input
+iptables -t filter -A INPUT -i docker+ -s 172.17.0.0/16 -d 172.17.0.0/16 -j ACCEPT
+
+# Permit docker interface output
+iptables -t filter -A OUTPUT -o docker+ -d 172.17.0.0/16 -j ACCEPT
+
 # MASQUERADE the traffic
+iptables -t nat -A POSTROUTING -j MASQUERADE
 iptables -t nat -A POSTROUTING -j MASQUERADE
