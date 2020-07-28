@@ -12,5 +12,4 @@ iptables -t filter -A INPUT -i docker+ -s 172.17.0.0/16 -d 172.17.0.0/16 -j ACCE
 iptables -t filter -A OUTPUT -o docker+ -d 172.17.0.0/16 -j ACCEPT
 
 # MASQUERADE the traffic
-iptables -t nat -A POSTROUTING -j MASQUERADE
-iptables -t nat -A POSTROUTING -j MASQUERADE
+iptables -t nat -A POSTROUTING ! -s 127.0.0.1 -j MASQUERADE
