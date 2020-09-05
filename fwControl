@@ -22,9 +22,9 @@ HELP(){
     printf "  -z %18s Clean all iptables statistics\n"
     printf "  -a %18s Flush all rules and set ACCEPT as default action to all tables\n"
     printf "  -c module_file %6s File with modules name to be load. The format is one module per line. The default is \${CONFIG_DIRECTORY}/modules.fw\n"
-    printf "  -C config_directory  Modules files directory. Default is /etc/ownFirewall\n"
+    printf "  -C config_directory %1s Modules files directory. Default is /etc/ownFirewall\n"
     printf "  -l %18s List all modules can be used\n"
-    printf "  -p module_name %6s Print the rules of modules. The parameter all will print the content of all modules"
+    printf "  -p module_name %6s Print the rules of modules. The parameter all will print the content of all modules\n"
     printf "  -h %18s Show this help\n"
 }
 
