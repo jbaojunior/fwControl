@@ -105,4 +105,4 @@ The options are:
 
 ### INSTALL
 Clone this project and execute `./installfwControl.sh` as root.
-i
+il
