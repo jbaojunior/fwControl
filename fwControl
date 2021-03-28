@@ -7,7 +7,7 @@ then
 	exit 5
 fi
 
-OPTS=$(getopt -o 'm:c:C:p:zcalh' -n 'firewallControl' -- "$@")
+OPTS=$(getopt -o 'm:c:C:p:b:zcalLhF' -n 'fwControl' -- "$@")
 
 if [ $? -ne 0  ]
 then
@@ -22,9 +22,12 @@ HELP(){
     printf "  -z %18s Clean all iptables statistics\n"
     printf "  -a %18s Flush all rules and set ACCEPT as default action to all tables\n"
     printf "  -c module_file %6s File with modules name to be load. The format is one module per line. The default is \${CONFIG_DIRECTORY}/modules.fw\n"
-    printf "  -C config_directory %1s Modules files directory. Default is /etc/ownFirewall\n"
+    printf "  -C config_directory %1s Modules files directory. Default is /etc/fwControl\n"
+    printf "  -b module_name %6s Add module in top of chain\n"
     printf "  -l %18s List all modules can be used\n"
+    printf "  -L %18s List modules loaded\n"
     printf "  -p module_name %6s Print the rules of modules. The parameter all will print the content of all modules\n"
+    printf "  -F %18s force the rules be read"
     printf "  -h %18s Show this help\n"
 }
 
@@ -32,17 +35,25 @@ eval set -- "${OPTS}"
 unset OPTS
 
 # Define some options
+CONTROL_FILE=/var/run/fwControl
 modules=""
+extraModules=""
 STATS=0
 ACCEPT=0
 PRINT=0
 LIST=0
+LIST_MODULES=0
+MODULES=0
+EXTRA_MODULES=0
+EXTRA_MODULES_LOAD=0
+FORCE_RULES=0
 
 ### Do the options parse
 while true
 do
     case $1 in
         '-m')
+            MODULES=1
             modules="${modules}${2}\n"
             shift 2    
             continue
@@ -71,6 +82,22 @@ do
             LIST=1
             shift
             break
+        ;;
+        '-L')
+            LIST_MODULES=1
+            shift
+            break
+        ;;
+        '-F')
+            FORCE_RULES=1
+            shift
+            break
+        ;;
+        '-b')
+            EXTRA_MODULES=1
+            extraModules="${extraModules}${2}\n"
+            shift 2
+            continue
         ;;
         '-p')
             PRINT=1
@@ -135,16 +162,33 @@ then
   exit 2
 fi
 
+if [ "${MODULES}" = 1 -a "${EXTRA_MODULES}" = 1 ]
+then
+  echo "The option -m can not be use together with -b"
+  exit 4
+fi
+
 if [ "${LIST}" = 1 ]
 then
     ls ${configDir}/modules
     exit 0
 fi
 
+if [ ${LIST_MODULES} = 1 ]
+then
+  cat ${CONTROL_FILE}
+  exit 0
+fi
+
 if [ "${LOAD_MODULES_FILE}" = 0 -a "${ACCEPT}" = 0  ]
 then
     echo -e "Don't exist modules to be load or the file can not be read. The default rules will be load.\nPlease configure with option '-c' or '-m' and verify the permissions if it is not right"
 fi
+
+### Add modules to control file if not exist
+addModulesToControlFile() {
+  grep -q "${1}" "${CONTROL_FILE}" || echo "${1}" >> "${CONTROL_FILE}"
+}
 
 ### Function to verify the modules
 verifyModule() {
@@ -159,8 +203,63 @@ verifyModule() {
 ### Function to load modules
 loadModules() {
   verifyModule "${1}"
-  source "${configDir}"/modules/"${1}"
+
+  if [ ${EXTRA_MODULES_LOAD} = 1 ]
+  then
+    source <(cat "${configDir}"/modules/"${1}" |sed -e s/"-A "/"-I "/g ) && INSERT_MODULE_RUN_CONFIG=1
+  else
+    source "${configDir}"/modules/"${1}" && INSERT_MODULE_RUN_CONFIG=1
+  fi
 }
+
+loadModulesFromFile() {
+  while read a
+  do
+    loadModules "${a}"
+  done < ${loadModulesFile}
+
+
+  if [ ${EXTRA_MODULES} = 1 ]
+  then
+    while read a
+    do
+      loadModules "${a}"
+    done < ${CONTROL_FILE}
+  fi
+
+}
+
+preRules() {
+  ### The order is important
+  ### Clean All Rules  
+  loadModules flush
+
+  ### Import loppback
+  loadModules loopback
+
+  ### Default policy Drop
+  loadModules policy-drop
+
+  ### Module web
+  loadModules web
+
+}
+
+postRules() {
+  ### Import Safety rules here
+  ### Because they can be invalidated by the rules above
+  loadModules safety
+
+  ### load the logs
+  loadModules drop-log
+
+  ### Drop all
+  loadModules drop-all
+
+  echo -e "Firewall rules load with success!"
+  exit 0
+}
+
 
 ## Print Modules
 if [ "${PRINT}" = 1  -a ${MODULE} != 0 ]
@@ -186,6 +285,7 @@ if [ "${ACCEPT}" = 1 ]
 then
   loadModules flush
   loadModules policy-accept
+  > ${CONTROL_FILE}
   echo -e "Firewall rules load with success!"
   exit 0
 fi
@@ -198,43 +298,36 @@ then
   exit 0
 fi
 
-######## Do action
-### The order is important
-### Clean All Rules
-loadModules flush
-
-### Import loppback
-loadModules loopback
-
-### Default policy Drop
-loadModules policy-drop
-
-### Module web
-loadModules web
-
-### Import the modules in file
-if [ "${LOAD_MODULES_FILE}" = 1 ]
+if [ ${FORCE_RULES} = 1 ]
 then
-  while read a
-  do
-    loadModules "${a}"
-  done < ${loadModulesFile}
+  preRules
+  EXTRA_MODULES=1
+  loadModulesFromFile
+  postRules
 fi
 
-### Modules load with -m parameter has priority
+### Load extra modules without change the present modules
+if [ ${EXTRA_MODULES} = 1 ]
+then
+  preRules
+  loadModulesFromFile
+  EXTRA_MODULES_LOAD=1
+  for i in $(echo -e "${extraModules}")
+  do
+    loadModules "${i}"
+    addModulesToControlFile "${i}"
+  done
+  # Deactivate to load rules on right order
+  EXTRA_MODULES_LOAD=0
+  postRules
+fi
+
+### Do action with default option - No one module or load with -m
+preRules
+loadModulesFromFile 
 for i in $(echo -e "${modules}")
 do
   loadModules "${i}"
+  addModulesToControlFile "${i}"
 done
-
-### Import Safety rules here
-### Because they can be invalidated by the rules above
-loadModules safety
-
-### load the logs
-loadModules drop-log
-
-### Drop all
-loadModules drop-all
-
-echo -e "Firewall rules load with success!"
+postRules
