@@ -27,7 +27,7 @@ HELP(){
     printf "  -l %18s List all modules can be used\n"
     printf "  -L %18s List modules loaded\n"
     printf "  -p module_name %6s Print the rules of modules. The parameter all will print the content of all modules\n"
-    printf "  -F %18s force the rules be read"
+    printf "  -F %18s force the rules be read\n"
     printf "  -h %18s Show this help\n"
 }
 
