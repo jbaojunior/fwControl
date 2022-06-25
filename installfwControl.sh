@@ -29,6 +29,17 @@ iptables -t filter -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 EOF
 fi
 
+# Output accept
+if [ ! -e "${configDir}"/modules/output-accept ]
+then
+  cat <<EOF > "${configDir}"/modules/output-accept
+iptables -t filter -P INPUT DROP
+iptables -t filter -P OUTPUT ACCEPT
+iptables -t filter -P FORWARD DROP
+iptables -t filter -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+EOF
+fi
+
 # Policy Accept
 if [ ! -e "${configDir}"/modules/policy-accept ]
 then

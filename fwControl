@@ -7,7 +7,7 @@ then
 	exit 5
 fi
 
-OPTS=$(getopt -o 'm:c:C:p:b:zcalLhF' -n 'fwControl' -- "$@")
+OPTS=$(getopt -o 'm:c:C:p:b:d:zcalLhF' -n 'fwControl' -- "$@")
 
 if [ $? -ne 0  ]
 then
@@ -28,6 +28,7 @@ HELP(){
     printf "  -L %18s List modules loaded\n"
     printf "  -p module_name %6s Print the rules of modules. The parameter all will print the content of all modules\n"
     printf "  -F %18s force the rules be read\n"
+    printf "  -d %18s Policy default to be load - [policy-drop | output-accept]. Default: policy-drop\n"
     printf "  -h %18s Show this help\n"
 }
 
@@ -38,6 +39,7 @@ unset OPTS
 CONTROL_FILE=/var/run/fwControl
 modules=""
 extraModules=""
+policy_default='policy-drop'
 STATS=0
 ACCEPT=0
 PRINT=0
@@ -102,6 +104,11 @@ do
         '-p')
             PRINT=1
             modules=$2
+            shift 2
+            break
+        ;;
+        '-d')
+            policy_default=$2
             shift 2
             break
         ;;
@@ -238,7 +245,7 @@ preRules() {
   loadModules loopback
 
   ### Default policy Drop
-  loadModules policy-drop
+  loadModules ${policy_default}
 
   ### Module web
   loadModules web
