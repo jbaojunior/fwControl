@@ -93,9 +93,9 @@ fi
 if [ ! -e "${configDir}"/modules/drop-log ]
 then
   cat <<EOF > "${configDir}"/modules/drop-log
-iptables -t filter -A OUTPUT   -j LOG --log-prefix "OUTPUT-DROP: "
-iptables -t filter -A INPUT    -j LOG --log-prefix "INPUT-DROP: "
-iptables -t filter -A FORWARD  -j LOG --log-prefix "FORWARD-DROP: "
+iptables -t filter -A OUTPUT   -j LOG --log-prefix "OUTPUT-DROP: " --log-level debug
+iptables -t filter -A INPUT    -j LOG --log-prefix "INPUT-DROP: " --log-level debug
+iptables -t filter -A FORWARD  -j LOG --log-prefix "FORWARD-DROP: " --log-level debug
 EOF
 fi
 
