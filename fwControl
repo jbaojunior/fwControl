@@ -217,6 +217,9 @@ loadModules() {
   else
     source "${configDir}"/modules/"${1}" && INSERT_MODULE_RUN_CONFIG=1
   fi
+
+  echo ${1} >> "${CONTROL_FILE}"
+
 }
 
 loadModulesFromFile() {
