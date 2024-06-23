@@ -1,40 +1,6 @@
 #!/bin/bash
 set -e
 
-if [ $(id -u) != 0 ]
-then
-	echo "Execute this script as root or use sudo"
-	exit 5
-fi
-
-OPTS=$(getopt -o 'm:c:C:p:b:d:zcalLhF' -n 'fwControl' -- "$@")
-
-if [ $? -ne 0  ]
-then
-   echo 'Some error happened ...'
-   exit 1
-fi
-
-### Help function to help =]
-HELP(){
-    echo "Usage: ${0} [OPTION]..."
-    printf "  -m module_name %6s Name of module that will be used to configure iptables\n"
-    printf "  -z %18s Clean all iptables statistics\n"
-    printf "  -a %18s Flush all rules and set ACCEPT as default action to all tables\n"
-    printf "  -c module_file %6s File with modules name to be load. The format is one module per line. The default is \${CONFIG_DIRECTORY}/modules.fw\n"
-    printf "  -C config_directory %1s Modules files directory. Default is /etc/fwControl\n"
-    printf "  -b module_name %6s Add module in top of chain\n"
-    printf "  -l %18s List all modules can be used\n"
-    printf "  -L %18s List modules loaded\n"
-    printf "  -p module_name %6s Print the rules of modules. The parameter all will print the content of all modules\n"
-    printf "  -F %18s force the rules be read\n"
-    printf "  -d %18s Policy default to be load - [policy-drop | output-accept]. Default: policy-drop\n"
-    printf "  -h %18s Show this help\n"
-}
-
-eval set -- "${OPTS}"
-unset OPTS
-
 # Define some options
 CONTROL_FILE=/var/run/fwControl
 modules=""
@@ -49,6 +15,33 @@ MODULES=0
 EXTRA_MODULES=0
 EXTRA_MODULES_LOAD=0
 FORCE_RULES=0
+
+if [ $? -ne 0  ]
+then
+   echo 'Some error happened ...'
+   exit 1
+fi
+
+### Help function to help =]
+HELP(){
+    echo "Usage: ${0} [OPTION]..."
+    printf "  -m module_name %6s Name of module that will be used to configure iptables\n"
+    printf "  -z %18s Clean all iptables statistics\n"
+    printf "  -A %18s Flush all rules and set ACCEPT as default action to all tables\n"
+    printf "  -c module_file %6s File with modules name to be load. The format is one module per line. The default is \${CONFIG_DIRECTORY}/modules.fw\n"
+    printf "  -C config_directory %1s Modules files directory. Default is /etc/fwControl\n"
+    printf "  -a module_name %6s Add module in top of chain\n"
+    printf "  -l %18s List all modules can be used\n"
+    printf "  -L %18s List modules loaded\n"
+    printf "  -p module_name %6s Print the rules of modules. The parameter all will print the content of all modules\n"
+    printf "  -F %18s force the rules be read\n"
+    printf "  -d %18s Policy default to be load - [policy-drop | output-accept]. Default: policy-drop\n"
+    printf "  -h %18s Show this help\n"
+}
+
+OPTS=$(getopt -o 'm:c:C:p:a:d:zcAlLhF' -l 'help' -n 'fwControl' -- "$@")
+eval set -- "${OPTS}"
+unset OPTS
 
 ### Do the options parse
 while true
@@ -75,7 +68,7 @@ do
             shift
             continue
         ;;
-        '-a')
+        '-A')
             ACCEPT=1
             shift
             continue
@@ -95,7 +88,7 @@ do
             shift
             break
         ;;
-        '-b')
+        '-a')
             EXTRA_MODULES=1
             extraModules="${extraModules}${2}\n"
             shift 2
@@ -112,7 +105,7 @@ do
             shift 2
             break
         ;;
-        '-h')
+        '-h|--help')
             echo 'Show the help'
             HELP
             shift
@@ -129,6 +122,12 @@ do
         ;;
     esac
 done    
+
+if [ "$(id -u)" != 0 ]
+then
+	echo "Execute this script as root or use sudo"
+	exit 5
+fi
 
 ### Do the right variable
 if [ -z "${configDir}"  ]
@@ -169,7 +168,7 @@ then
   exit 2
 fi
 
-if [ "${MODULES}" = 1 -a "${EXTRA_MODULES}" = 1 ]
+if [ "${MODULES}" = 1 ] && [ "${EXTRA_MODULES}" = 1 ]
 then
   echo "The option -m can not be use together with -b"
   exit 4
@@ -187,7 +186,7 @@ then
   exit 0
 fi
 
-if [ "${LOAD_MODULES_FILE}" = 0 -a "${ACCEPT}" = 0  ]
+if [ "${LOAD_MODULES_FILE}" = 0 ] && [ "${ACCEPT}" = 0 ]
 then
     echo -e "Don't exist modules to be load or the file can not be read. The default rules will be load.\nPlease configure with option '-c' or '-m' and verify the permissions if it is not right"
 fi
@@ -217,17 +216,14 @@ loadModules() {
   else
     source "${configDir}"/modules/"${1}" && INSERT_MODULE_RUN_CONFIG=1
   fi
-
-  echo ${1} >> "${CONTROL_FILE}"
-
 }
 
 loadModulesFromFile() {
   while read a
   do
     loadModules "${a}"
+    addModulesToControlFile "${a}"
   done < ${loadModulesFile}
-
 
   if [ ${EXTRA_MODULES} = 1 ]
   then
@@ -272,11 +268,11 @@ postRules() {
 
 
 ## Print Modules
-if [ "${PRINT}" = 1  -a ${MODULE} != 0 ]
+if [ "${PRINT}" = 1 ] && [ ${MODULE} != 0 ]
 then
     if [ "${modules}" = "all" ]
     then
-        for i in `ls "${configDir}"/modules`
+        for i in $(ls -1 "${configDir}"/modules)
         do 
             printf "############### Module: %s %10s\n" "${i}"
             cat "${configDir}"/modules/"${i}"
@@ -334,7 +330,8 @@ fi
 
 ### Do action with default option - No one module or load with -m
 preRules
-loadModulesFromFile 
+truncate -s0 "${CONTROL_FILE}"
+loadModulesFromFile
 for i in $(echo -e "${modules}")
 do
   loadModules "${i}"
