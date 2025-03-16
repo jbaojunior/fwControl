@@ -129,7 +129,7 @@ iptables -t filter -A OUTPUT -p udp --dport 443  -m state --state NEW,ESTABLISHE
 iptables -t filter -A OUTPUT -p tcp --dport 853 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
 
 # DHCP
-iptables -t filter -A OUTPUT -p udp --dport 68 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+iptables -t filter -A OUTPUT -p udp --sport 68 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
 EOF
 fi
 
